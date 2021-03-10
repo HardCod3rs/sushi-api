@@ -8,9 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-// Relayers
-import "./utils/relayutils.sol";
-
 /* Interfaces */
 // Token Interfaces
 import "./utils/IWETH.sol";
@@ -55,6 +52,7 @@ contract SwapContract is Ownable, relayutils {
 
     function generateAPIKey(string memory apiName)
         public
+        onlyOwner
         returns (uint256 apiKey)
     {
         apiKey = uint256(keccak256(abi.encodePacked(apiName)));
