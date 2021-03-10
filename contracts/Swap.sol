@@ -8,9 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-// Relayers
-import "./utils/relayutils.sol";
-
 /* Interfaces */
 // Token Interfaces
 import "./utils/IWETH.sol";
@@ -33,8 +30,8 @@ contract SwapContract is Ownable, relayutils {
     struct APIVols {
         mapping(address => uint256) Vol;
     }
-    mapping(uint256 => uint256) public APItoVolinETH;
-    mapping(uint256 => APIVols) public APItoVol;
+    mapping(uint256 => uint256) APItoVolinETH;
+    mapping(uint256 => APIVols) APItoVol;
 
     // Sushi
     address SushiContract = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
@@ -59,19 +56,20 @@ contract SwapContract is Ownable, relayutils {
 
     function generateAPIKey(string memory apiName)
         public
+        onlyOwner
         returns (uint256 apiKey)
     {
         apiKey = uint256(keccak256(abi.encodePacked(apiName)));
         APItoVolinETH[apiKey] = 0;
     }
 
-    function APIVolumes(uint256 APIKey)
+    function APIVolume(uint256 APIKey, address Token)
         public
         view
-        returns (uint256 VolumeinETH, APIVols memory VolumeinTokens)
+        returns (uint256 VolumeinETH, uint256 VolumeinToken)
     {
         VolumeinETH = APItoVolinETH[APIKey];
-        VolumeinTokens = APItoVol[APIKey];
+        VolumeinToken = APItoVol[APIKey].Vol[Token];
     }
 
     function expectedReturn(
