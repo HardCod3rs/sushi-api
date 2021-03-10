@@ -16,7 +16,7 @@ import "./Sushi/ISushiRouter02.sol";
 // Oracle
 import "./utils/priceOracle.sol";
 
-contract SwapContract is Ownable, relayutils {
+contract SwapContract is Ownable {
     struct swapParameters {
         address[] path;
         uint256 amount;
