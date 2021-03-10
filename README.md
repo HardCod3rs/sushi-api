@@ -1,6 +1,7 @@
 ## Sushi API
 
 Contract for Tracking and Generating API Key for Sushi.
+It tracks the Volume in both ETH Value and Source Token Value.
 
 # TODO:
 

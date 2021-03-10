@@ -30,7 +30,11 @@ contract SwapContract is Ownable, relayutils {
     struct APIParameters {
         uint256 APIKey;
     }
-    mapping(uint256 => uint256) public APItoVol;
+    struct APIVols {
+        mapping(address => uint256) Vol;
+    }
+    mapping(uint256 => uint256) public APItoVolinETH;
+    mapping(uint256 => APIVols) public APItoVol;
 
     // Sushi
     address SushiContract = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
@@ -58,7 +62,16 @@ contract SwapContract is Ownable, relayutils {
         returns (uint256 apiKey)
     {
         apiKey = uint256(keccak256(abi.encodePacked(apiName)));
-        APItoVol[apiKey] = 0;
+        APItoVolinETH[apiKey] = 0;
+    }
+
+    function APIVolumes(uint256 APIKey)
+        public
+        view
+        returns (uint256 VolumeinETH, APIVols memory VolumeinTokens)
+    {
+        VolumeinETH = APItoVolinETH[APIKey];
+        VolumeinTokens = APItoVol[APIKey];
     }
 
     function expectedReturn(
@@ -138,12 +151,12 @@ contract SwapContract is Ownable, relayutils {
                 );
             // API
             uint256 TargetTokeninETH =
-                priceOracleInterface.getAssetPrice(address(targetToken)) /
-                    1 ether;
-            APItoVol[APIParams.APIKey] +=
-                receivedAmounts[receivedAmounts.length - 1] *
+                priceOracleInterface.getAssetPrice(address(srcToken)) / 1 ether;
+            APItoVolinETH[APIParams.APIKey] +=
+                swapParams.amount *
                 TargetTokeninETH;
-
+            APItoVol[APIParams.APIKey].Vol[address(srcToken)] += swapParams
+                .amount;
             require(status);
         }
         // Emit Events
