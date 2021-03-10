@@ -61,6 +61,14 @@ contract SwapContract is Ownable, relayutils {
         APItoVol[apiKey] = 0;
     }
 
+    function APIVolume(uint256 APIKey)
+        public
+        view
+        returns (uint256 VolumeinETH)
+    {
+        VolumeinETH = APItoVol[APIKey];
+    }
+
     function expectedReturn(
         address[] memory path,
         uint256 amount,
