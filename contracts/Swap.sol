@@ -16,7 +16,7 @@ import "./Sushi/ISushiRouter02.sol";
 // Oracle
 import "./utils/priceOracle.sol";
 
-contract SwapContract is Ownable, relayutils {
+contract SwapContract is Ownable {
     struct swapParameters {
         address[] path;
         uint256 amount;
@@ -27,7 +27,11 @@ contract SwapContract is Ownable, relayutils {
     struct APIParameters {
         uint256 APIKey;
     }
-    mapping(uint256 => uint256) public APItoVol;
+    struct APIVols {
+        mapping(address => uint256) Vol;
+    }
+    mapping(uint256 => uint256) APItoVolinETH;
+    mapping(uint256 => APIVols) APItoVol;
 
     // Sushi
     address SushiContract = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
@@ -56,7 +60,16 @@ contract SwapContract is Ownable, relayutils {
         returns (uint256 apiKey)
     {
         apiKey = uint256(keccak256(abi.encodePacked(apiName)));
-        APItoVol[apiKey] = 0;
+        APItoVolinETH[apiKey] = 0;
+    }
+
+    function APIVolume(uint256 APIKey, address Token)
+        public
+        view
+        returns (uint256 VolumeinETH, uint256 VolumeinToken)
+    {
+        VolumeinETH = APItoVolinETH[APIKey];
+        VolumeinToken = APItoVol[APIKey].Vol[Token];
     }
 
     function APIVolume(uint256 APIKey)
@@ -144,12 +157,12 @@ contract SwapContract is Ownable, relayutils {
                 );
             // API
             uint256 TargetTokeninETH =
-                priceOracleInterface.getAssetPrice(address(targetToken)) /
-                    1 ether;
-            APItoVol[APIParams.APIKey] +=
-                receivedAmounts[receivedAmounts.length - 1] *
+                priceOracleInterface.getAssetPrice(address(srcToken)) / 1 ether;
+            APItoVolinETH[APIParams.APIKey] +=
+                swapParams.amount *
                 TargetTokeninETH;
-
+            APItoVol[APIParams.APIKey].Vol[address(srcToken)] += swapParams
+                .amount;
             require(status);
         }
         // Emit Events
