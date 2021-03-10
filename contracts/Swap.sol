@@ -72,14 +72,6 @@ contract SwapContract is Ownable {
         VolumeinToken = APItoVol[APIKey].Vol[Token];
     }
 
-    function APIVolume(uint256 APIKey)
-        public
-        view
-        returns (uint256 VolumeinETH)
-    {
-        VolumeinETH = APItoVol[APIKey];
-    }
-
     function expectedReturn(
         address[] memory path,
         uint256 amount,
