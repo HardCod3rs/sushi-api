@@ -34,14 +34,14 @@ contract SwapContract is Ownable {
     mapping(uint256 => APIVols) APItoVol;
 
     // Sushi
-    address SushiContract = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
+    address SushiContract;
     ISushiRouter02 SushiInterface = ISushiRouter02(SushiContract);
     // Tokens
-    address ETHAddress = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address WETHAddress = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
+    address ETHAddress;
+    address WETHAddress;
     WETHInterface WETH = WETHInterface(WETHAddress);
     // Oracle
-    address chainLinkPriceOracle = 0x76B47460d7F7c5222cFb6b6A75615ab10895DDe4;
+    address chainLinkPriceOracle;
     ChainlinkPriceOracle priceOracleInterface =
         ChainlinkPriceOracle(chainLinkPriceOracle);
 
@@ -54,6 +54,18 @@ contract SwapContract is Ownable {
         uint256 destAmount
     );
 
+    constructor(
+        address SushiContractAddress,
+        address ETHAddress,
+        address WETHAddress,
+        address chainLinkPriceOracleAddress
+    ) public {
+        SushiContract = SushiContractAddress;
+        ETHAddress = ETHAddress;
+        WETHAddress = WETHAddress;
+        chainLinkPriceOracle = chainLinkPriceOracleAddress;
+    }
+
     function generateAPIKey(string memory apiName)
         public
         onlyOwner
@@ -63,12 +75,19 @@ contract SwapContract is Ownable {
         APItoVolinETH[apiKey] = 0;
     }
 
-    function APIVolume(uint256 APIKey, address Token)
+    function APIVolumeInETH(uint256 APIKey)
         public
         view
-        returns (uint256 VolumeinETH, uint256 VolumeinToken)
+        returns (uint256 VolumeinETH)
     {
         VolumeinETH = APItoVolinETH[APIKey];
+    }
+
+    function APIVolumeInToken(uint256 APIKey, address Token)
+        public
+        view
+        returns (uint256 VolumeinToken)
+    {
         VolumeinToken = APItoVol[APIKey].Vol[Token];
     }
 
@@ -119,22 +138,29 @@ contract SwapContract is Ownable {
         swapParameters memory swapParams,
         APIParameters memory APIParams
     ) public payable returns (bool status, uint256[] memory receivedAmounts) {
-        // Consts
-        IERC20 srcToken = IERC20(swapParams.path[0]);
+        // Consts.
+        IERC20 srcToken;
+        if (swapParams.path[0] == ETHAddress) srcToken = IERC20(WETHAddress);
+        else {
+            srcToken = IERC20(swapParams.path[0]);
+            // Transfer
+            require(
+                srcToken.transferFrom(
+                    msg.sender,
+                    address(this),
+                    swapParams.amount
+                )
+            );
+        }
+
         IERC20 targetToken =
             IERC20(swapParams.path[swapParams.path.length - 1]);
         {
-            // Transfer
-            if (address(srcToken) != ETHAddress) {
-                require(
-                    srcToken.transferFrom(
-                        msg.sender,
-                        address(this),
-                        swapParams.amount
-                    )
-                );
-                require(srcToken.approve(SushiContract, swapParams.amount));
-            }
+            // Approve
+            require(
+                srcToken.approve(SushiContract, swapParams.amount),
+                "Approve Failed!"
+            );
             // Swap
             uint256[] memory receivedAmounts = _swap(swapParams);
             // Transfer Back
@@ -155,7 +181,7 @@ contract SwapContract is Ownable {
                 TargetTokeninETH;
             APItoVol[APIParams.APIKey].Vol[address(srcToken)] += swapParams
                 .amount;
-            require(status);
+            require(status, "Transfer Back Failed!");
         }
         // Emit Events
         emit SwapComplete(
