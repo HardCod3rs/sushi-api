@@ -1,13 +1,11 @@
 {
   "mainnet": {
     "SushiContractAddress": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
-    "ETHAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-    "WETHAddress": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+    "WETHAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     "chainLinkPriceOracleAddress": "0x76B47460d7F7c5222cFb6b6A75615ab10895DDe4"
   },
   "kovan": {
     "SushiContractAddress": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-    "ETHAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     "WETHAddress": "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
     "chainLinkPriceOracleAddress": "0x276C4793F2EE3D5Bf18C5b879529dD4270BA4814"
   }

@@ -10,4 +10,4 @@ It tracks the Volume in both ETH Value and Source Token Value.
 
 # Deployed Address
 
-Kovan: <a href="https://kovan.etherscan.io/address/0xf5367055649680C6A4Dc0Aa9de90C54BeAb6f772">0xf5367055649680C6A4Dc0Aa9de90C54BeAb6f772</a>
+Kovan: <a href="https://kovan.etherscan.io/address/0xD2A5c881D06083d275251299C3AB4ce822A7A0D5">0xD2A5c881D06083d275251299C3AB4ce822A7A0D5</a>

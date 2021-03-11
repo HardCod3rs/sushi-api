@@ -33,18 +33,13 @@ contract SwapContract is Ownable {
     mapping(uint256 => uint256) APItoVolinETH;
     mapping(uint256 => APIVols) APItoVol;
 
+    address ETHAddress = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     // Sushi
-    address SushiContract;
-    ISushiRouter02 SushiInterface = ISushiRouter02(SushiContract);
+    ISushiRouter02 SushiInterface;
     // Tokens
-    address ETHAddress;
-    address WETHAddress;
-    WETHInterface WETH = WETHInterface(WETHAddress);
+    WETHInterface WETH;
     // Oracle
-    address chainLinkPriceOracle;
-    ChainlinkPriceOracle priceOracleInterface =
-        ChainlinkPriceOracle(chainLinkPriceOracle);
-
+    ChainlinkPriceOracle priceOracleInterface;
     // Events
     event SwapComplete(
         address Sender,
@@ -55,15 +50,15 @@ contract SwapContract is Ownable {
     );
 
     constructor(
-        address SushiContractAddress,
-        address ETHAddress,
-        address WETHAddress,
-        address chainLinkPriceOracleAddress
+        address _SushiInterfaceAddress,
+        address _WETHAddress,
+        address _chainLinkPriceOracleAddress
     ) public {
-        SushiContract = SushiContractAddress;
-        ETHAddress = ETHAddress;
-        WETHAddress = WETHAddress;
-        chainLinkPriceOracle = chainLinkPriceOracleAddress;
+        SushiInterface = ISushiRouter02(_SushiInterfaceAddress);
+        WETH = WETHInterface(_WETHAddress);
+        priceOracleInterface = ChainlinkPriceOracle(
+            _chainLinkPriceOracleAddress
+        );
     }
 
     function generateAPIKey(string memory apiName)
@@ -106,7 +101,7 @@ contract SwapContract is Ownable {
     {
         if (swapParams.path[0] == ETHAddress) {
             WETH.deposit{value: msg.value}();
-            swapParams.path[0] = WETHAddress;
+            swapParams.path[0] = address(WETH);
             amounts = SushiInterface.swapExactTokensForTokens(
                 swapParams.amount,
                 swapParams.minReturn,
@@ -115,7 +110,7 @@ contract SwapContract is Ownable {
                 (now + 30 minutes)
             );
         } else if (swapParams.path[swapParams.path.length - 1] == ETHAddress) {
-            swapParams.path[swapParams.path.length - 1] = WETHAddress;
+            swapParams.path[swapParams.path.length - 1] = address(WETH);
             amounts = SushiInterface.swapExactTokensForTokens(
                 swapParams.amount,
                 swapParams.minReturn,
@@ -139,30 +134,26 @@ contract SwapContract is Ownable {
         APIParameters memory APIParams
     ) public payable returns (bool status, uint256[] memory receivedAmounts) {
         // Consts.
+        bool isSourceEthereum;
         IERC20 srcToken;
-        if (swapParams.path[0] == ETHAddress) srcToken = IERC20(WETHAddress);
-        else {
+        if (swapParams.path[0] == ETHAddress) {
+            srcToken = IERC20(address(WETH));
+            isSourceEthereum = true;
+        } else {
             srcToken = IERC20(swapParams.path[0]);
             // Transfer
-            require(
-                srcToken.transferFrom(
-                    msg.sender,
-                    address(this),
-                    swapParams.amount
-                )
-            );
+            srcToken.transferFrom(msg.sender, address(this), swapParams.amount);
         }
-
         IERC20 targetToken =
             IERC20(swapParams.path[swapParams.path.length - 1]);
+
+        uint256[] memory receivedAmounts;
+
         {
             // Approve
-            require(
-                srcToken.approve(SushiContract, swapParams.amount),
-                "Approve Failed!"
-            );
+            srcToken.approve(address(SushiInterface), swapParams.amount);
             // Swap
-            uint256[] memory receivedAmounts = _swap(swapParams);
+            receivedAmounts = _swap(swapParams);
             // Transfer Back
             if (address(targetToken) != ETHAddress)
                 status = targetToken.transfer(
@@ -174,14 +165,18 @@ contract SwapContract is Ownable {
                     receivedAmounts[receivedAmounts.length - 1]
                 );
             // API
-            uint256 TargetTokeninETH =
-                priceOracleInterface.getAssetPrice(address(srcToken)) / 1 ether;
+            uint256 TokenPriceinETH;
+            if (!isSourceEthereum)
+                TokenPriceinETH =
+                    priceOracleInterface.getAssetPrice(address(srcToken)) /
+                    1 ether;
+            else TokenPriceinETH = 1;
             APItoVolinETH[APIParams.APIKey] +=
                 swapParams.amount *
-                TargetTokeninETH;
+                TokenPriceinETH;
             APItoVol[APIParams.APIKey].Vol[address(srcToken)] += swapParams
                 .amount;
-            require(status, "Transfer Back Failed!");
+            require(status, "Swap Failed!");
         }
         // Emit Events
         emit SwapComplete(
