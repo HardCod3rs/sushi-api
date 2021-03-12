@@ -9,6 +9,8 @@ It tracks the Volume in both ETH Value and Source Token Value.
 
 [] Web Interface for Statistics & API Management
 
+[] SubGraph for API Volumes and Swaps
+
 # Deployed Address
 
 Kovan: <a href="https://kovan.etherscan.io/address/0xD2A5c881D06083d275251299C3AB4ce822A7A0D5">0xD2A5c881D06083d275251299C3AB4ce822A7A0D5</a>
